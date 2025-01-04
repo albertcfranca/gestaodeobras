@@ -1,18 +1,17 @@
+// models/User.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const UserSchema = new mongoose.Schema({
-    nome: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    senha: { type: String, required: true }
+    nome: String,
+    email: { type: String, unique: true },
+    senha: String
 });
 
-// Criptografar a senha antes de salvar
-UserSchema.pre('save', async function (next) {
-    if (!this.isModified('senha')) return next();
-    this.senha = await bcrypt.hash(this.senha, 10);
-    next();
-});
+// Método para comparar senhas
+UserSchema.methods.isValidPassword = async function (senhaDigitada) {
+    return await bcrypt.compare(senhaDigitada, this.senha);
+};
 
 const User = mongoose.model('User', UserSchema);
 module.exports = User;

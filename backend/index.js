@@ -7,12 +7,18 @@ const bcrypt = require('bcryptjs');
 const app = express();
 app.use(express.json());
 
-// Middleware de autenticação com JWT
+// Middleware de autenticação com JWT atualizado
 const verificarToken = (req, res, next) => {
-    const token = req.header('Authorization');
+    const tokenHeader = req.header('Authorization');
 
-    if (!token) {
+    if (!tokenHeader) {
         return res.status(401).send({ error: 'Acesso negado. Token não fornecido!' });
+    }
+
+    // Garantindo que o formato seja "Bearer <token>"
+    const token = tokenHeader.split(' ')[1];
+    if (!token) {
+        return res.status(401).send({ error: 'Formato de token inválido!' });
     }
 
     try {
@@ -24,10 +30,13 @@ const verificarToken = (req, res, next) => {
     }
 };
 
+
 // Conectar ao MongoDB
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/gestaoobras')
-    .then(() => console.log('Conectado ao MongoDB Atlas!'))
-    .catch(err => console.error('Erro ao conectar ao MongoDB:', err));
+if (!mongoose.connection.readyState) { 
+    mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/gestaoobras')
+        .then(() => console.log('Conectado ao MongoDB Atlas!'))
+        .catch(err => console.error('Erro ao conectar ao MongoDB:', err));
+}
 
 // Importar modelos
 const Obra = require('./models/Obra');
@@ -84,20 +93,22 @@ app.delete('/obras/:id', verificarToken, async (req, res) => {
     }
 });
 
-// Rota de registro de usuário com validação
+// Rota de registro de usuário com validação e debug
 app.post('/register', async (req, res) => {
     try {
         const { nome, email, senha } = req.body;
         if (!nome || !email || !senha) {
             return res.status(400).send({ error: 'Todos os campos são obrigatórios!' });
         }
-        const usuarioExistente = await User.findOne({ email });
+        const usuarioExistente = await User.findOne({ email: email.trim() });
         if (usuarioExistente) {
             return res.status(400).send({ error: 'E-mail já cadastrado!' });
         }
         const salt = await bcrypt.genSalt(10);
-        const senhaCriptografada = await bcrypt.hash(senha, salt);
-        const novoUsuario = new User({ nome, email, senha: senhaCriptografada });
+        const senhaCriptografada = await bcrypt.hash(senha.trim(), salt);
+        console.log('Senha original:', senha);
+        console.log('Senha hash gerada:', senhaCriptografada);
+        const novoUsuario = new User({ nome, email: email.trim(), senha: senhaCriptografada });
         await novoUsuario.save();
         res.status(201).send({ message: 'Usuário registrado com sucesso!' });
     } catch (error) {
@@ -105,18 +116,20 @@ app.post('/register', async (req, res) => {
     }
 });
 
-// Rota de login
+// Rota de login com validação usando método do schema
 app.post('/login', async (req, res) => {
     try {
         const { email, senha } = req.body;
-        const usuario = await User.findOne({ email });
+        const usuario = await User.findOne({ email: email.trim() });
         if (!usuario) {
             return res.status(404).send({ error: 'Usuário não encontrado!' });
         }
-        const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
+
+        const senhaCorreta = await usuario.isValidPassword(senha.trim());
         if (!senhaCorreta) {
             return res.status(401).send({ error: 'Senha incorreta!' });
         }
+
         const token = jwt.sign({ id: usuario._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.status(200).send({ token });
     } catch (error) {
