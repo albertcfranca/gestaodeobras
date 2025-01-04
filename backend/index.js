@@ -7,7 +7,7 @@ const bcrypt = require('bcryptjs');
 const app = express();
 app.use(express.json());
 
-// Middleware de autenticação com JWT atualizado
+// Middleware de autenticação com JWT
 const verificarToken = (req, res, next) => {
     const tokenHeader = req.header('Authorization');
 
@@ -15,7 +15,6 @@ const verificarToken = (req, res, next) => {
         return res.status(401).send({ error: 'Acesso negado. Token não fornecido!' });
     }
 
-    // Garantindo que o formato seja "Bearer <token>"
     const token = tokenHeader.split(' ')[1];
     if (!token) {
         return res.status(401).send({ error: 'Formato de token inválido!' });
@@ -30,17 +29,17 @@ const verificarToken = (req, res, next) => {
     }
 };
 
-
 // Conectar ao MongoDB
-if (!mongoose.connection.readyState) { 
-    mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/gestaoobras')
-        .then(() => console.log('Conectado ao MongoDB Atlas!'))
-        .catch(err => console.error('Erro ao conectar ao MongoDB:', err));
-}
+mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/gestaoobras')
+    .then(() => console.log('Conectado ao MongoDB Atlas!'))
+    .catch(err => console.error('Erro ao conectar ao MongoDB:', err));
 
 // Importar modelos
 const Obra = require('./models/Obra');
 const User = require('./models/User');
+
+// Exportar app para testes automatizados
+module.exports = app;
 
 // Rota para cadastrar uma nova obra protegida
 app.post('/obras', verificarToken, async (req, res) => {
@@ -93,7 +92,7 @@ app.delete('/obras/:id', verificarToken, async (req, res) => {
     }
 });
 
-// Rota de registro de usuário com validação e debug
+// Rota de registro de usuário com validação
 app.post('/register', async (req, res) => {
     try {
         const { nome, email, senha } = req.body;
@@ -106,8 +105,6 @@ app.post('/register', async (req, res) => {
         }
         const salt = await bcrypt.genSalt(10);
         const senhaCriptografada = await bcrypt.hash(senha.trim(), salt);
-        console.log('Senha original:', senha);
-        console.log('Senha hash gerada:', senhaCriptografada);
         const novoUsuario = new User({ nome, email: email.trim(), senha: senhaCriptografada });
         await novoUsuario.save();
         res.status(201).send({ message: 'Usuário registrado com sucesso!' });
@@ -116,7 +113,7 @@ app.post('/register', async (req, res) => {
     }
 });
 
-// Rota de login com validação usando método do schema
+// Rota de login com validação
 app.post('/login', async (req, res) => {
     try {
         const { email, senha } = req.body;
@@ -124,12 +121,11 @@ app.post('/login', async (req, res) => {
         if (!usuario) {
             return res.status(404).send({ error: 'Usuário não encontrado!' });
         }
+        const senhaCorreta = await bcrypt.compare(senha.trim(), usuario.senha);
 
-        const senhaCorreta = await usuario.isValidPassword(senha.trim());
         if (!senhaCorreta) {
             return res.status(401).send({ error: 'Senha incorreta!' });
         }
-
         const token = jwt.sign({ id: usuario._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.status(200).send({ token });
     } catch (error) {
@@ -145,3 +141,9 @@ app.get('/', (req, res) => {
 // Definir a porta para o servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+
+// Fechamento correto para testes Jest
+process.on('SIGTERM', async () => {
+    await mongoose.connection.close();
+    process.exit(0);
+});
