@@ -3,9 +3,12 @@ const mongoose = require('mongoose');
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const cors = require('cors');
 
-const app = express();
+const app = express();  // Definido antes de ser utilizado
+app.use(cors());        // Agora está abaixo da definição
 app.use(express.json());
+
 
 // Middleware de autenticação com JWT
 const verificarToken = (req, res, next) => {
