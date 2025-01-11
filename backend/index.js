@@ -4,6 +4,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const cors = require('cors');
+const Joi = require('joi');  // Importando a biblioteca Joi
 
 const app = express();  // Definido antes de ser utilizado
 app.use(cors());        // Agora está abaixo da definição
@@ -32,6 +33,14 @@ const verificarToken = (req, res, next) => {
     }
 };
 
+// Definir o esquema de validação para criação de obras
+const obraSchema = Joi.object({
+    nome: Joi.string().min(3).required(),
+    descricao: Joi.string().min(10).required(),
+    dataInicio: Joi.date().iso().required(),
+    orcamentoTotal: Joi.number().positive().required()
+});
+
 // Conectar ao MongoDB
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/gestaoobras')
     .then(() => console.log('Conectado ao MongoDB Atlas!'))
@@ -44,18 +53,19 @@ const User = require('./models/User');
 // Exportar app para testes automatizados
 module.exports = app;
 
-// Rota para cadastrar uma nova obra protegida
+// Rota para cadastrar uma nova obra com validação usando Joi
 app.post('/obras', verificarToken, async (req, res) => {
+    const { error } = obraSchema.validate(req.body);
+    if (error) {
+        return res.status(400).send({ error: error.details[0].message });
+    }
+
     try {
-        const { nome, descricao, dataInicio, orcamentoTotal } = req.body;
-        if (!nome || !descricao || !dataInicio || !orcamentoTotal) {
-            return res.status(400).send({ error: 'Todos os campos são obrigatórios!' });
-        }
         const novaObra = new Obra(req.body);
         const obraSalva = await novaObra.save();
         res.status(201).send(obraSalva);
     } catch (error) {
-        res.status(400).send({ error: 'Erro ao criar obra', detalhes: error.message });
+        res.status(500).send({ error: 'Erro ao criar obra', detalhes: error.message });
     }
 });
 
@@ -72,7 +82,11 @@ app.get('/obras', async (req, res) => {
 // Rota para atualizar uma obra
 app.put('/obras/:id', verificarToken, async (req, res) => {
     try {
-        const obraAtualizada = await Obra.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const obraAtualizada = await Obra.findByIdAndUpdate(
+            req.params.id, 
+            req.body, 
+            { new: true }
+        );
         if (!obraAtualizada) {
             return res.status(404).send({ error: 'Obra não encontrada' });
         }
@@ -94,6 +108,7 @@ app.delete('/obras/:id', verificarToken, async (req, res) => {
         res.status(500).send({ error: 'Erro ao deletar a obra', detalhes: error.message });
     }
 });
+
 
 // Rota de registro de usuário com validação
 app.post('/register', async (req, res) => {
