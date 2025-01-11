@@ -53,31 +53,36 @@ const User = require('./models/User');
 // Exportar app para testes automatizados
 module.exports = app;
 
-// Rota para cadastrar uma nova obra com validação usando Joi
+// Rota de criação de obra no index.js
 app.post('/obras', verificarToken, async (req, res) => {
-    const { error } = obraSchema.validate(req.body);
-    if (error) {
-        return res.status(400).send({ error: error.details[0].message });
-    }
-
     try {
-        const novaObra = new Obra(req.body);
+        const { nome, descricao, dataInicio, orcamentoTotal } = req.body;
+        if (!nome || !descricao || !dataInicio || !orcamentoTotal) {
+            return res.status(400).send({ error: 'Todos os campos são obrigatórios!' });
+        }
+
+        const novaObra = new Obra({
+            ...req.body,
+            usuarioId: req.user.id  // Associando o usuário logado
+        });
         const obraSalva = await novaObra.save();
         res.status(201).send(obraSalva);
     } catch (error) {
-        res.status(500).send({ error: 'Erro ao criar obra', detalhes: error.message });
+        res.status(500).send({ error: 'Erro ao criar obra.', detalhes: error.message });
     }
 });
 
-// Rota para listar todas as obras
-app.get('/obras', async (req, res) => {
+
+// Rota de listagem de obras filtrada pelo usuário logado
+app.get('/obras', verificarToken, async (req, res) => {
     try {
-        const obras = await Obra.find();
+        const obras = await Obra.find({ usuarioId: req.user.id });
         res.status(200).send(obras);
     } catch (error) {
-        res.status(500).send({ error: 'Erro ao buscar obras' });
+        res.status(500).send({ error: 'Erro ao buscar obras.' });
     }
 });
+
 
 // Rota para atualizar uma obra
 app.put('/obras/:id', verificarToken, async (req, res) => {
