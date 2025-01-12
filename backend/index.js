@@ -4,17 +4,15 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const cors = require('cors');
-const Joi = require('joi');  // Importando a biblioteca Joi
+const Joi = require('joi');
 
-const app = express();  // Definido antes de ser utilizado
-app.use(cors());        // Agora está abaixo da definição
+const app = express();
+app.use(cors());
 app.use(express.json());
-
 
 // Middleware de autenticação com JWT
 const verificarToken = (req, res, next) => {
     const tokenHeader = req.header('Authorization');
-
     if (!tokenHeader) {
         return res.status(401).send({ error: 'Acesso negado. Token não fornecido!' });
     }
@@ -33,7 +31,7 @@ const verificarToken = (req, res, next) => {
     }
 };
 
-// Definir o esquema de validação para criação de obras
+// Esquema de validação de obras usando Joi
 const obraSchema = Joi.object({
     nome: Joi.string().min(3).required(),
     descricao: Joi.string().min(10).required(),
@@ -53,17 +51,17 @@ const User = require('./models/User');
 // Exportar app para testes automatizados
 module.exports = app;
 
-// Rota de criação de obra no index.js
+// Rota de criação de obra com validação e tratamento de erros refinados
 app.post('/obras', verificarToken, async (req, res) => {
     try {
-        const { nome, descricao, dataInicio, orcamentoTotal } = req.body;
-        if (!nome || !descricao || !dataInicio || !orcamentoTotal) {
-            return res.status(400).send({ error: 'Todos os campos são obrigatórios!' });
+        const { error } = obraSchema.validate(req.body);
+        if (error) {
+            return res.status(400).send({ error: error.details[0].message });
         }
 
         const novaObra = new Obra({
             ...req.body,
-            usuarioId: req.user.id  // Associando o usuário logado
+            usuarioId: req.user.id
         });
         const obraSalva = await novaObra.save();
         res.status(201).send(obraSalva);
@@ -72,28 +70,27 @@ app.post('/obras', verificarToken, async (req, res) => {
     }
 });
 
-
-// Rota de listagem de obras filtrada pelo usuário logado
+// Rota de listagem de obras do usuário logado
 app.get('/obras', verificarToken, async (req, res) => {
     try {
         const obras = await Obra.find({ usuarioId: req.user.id });
         res.status(200).send(obras);
     } catch (error) {
-        res.status(500).send({ error: 'Erro ao buscar obras.' });
+        res.status(500).send({ error: 'Erro ao buscar obras.', detalhes: error.message });
     }
 });
 
-
-// Rota para atualizar uma obra
+// Rota de atualização de uma obra
 app.put('/obras/:id', verificarToken, async (req, res) => {
     try {
-        const obraAtualizada = await Obra.findByIdAndUpdate(
-            req.params.id, 
-            req.body, 
+        const obraAtualizada = await Obra.findOneAndUpdate(
+            { _id: req.params.id, usuarioId: req.user.id },
+            req.body,
             { new: true }
         );
+
         if (!obraAtualizada) {
-            return res.status(404).send({ error: 'Obra não encontrada' });
+            return res.status(404).send({ error: 'Obra não encontrada ou sem permissão.' });
         }
         res.status(200).send(obraAtualizada);
     } catch (error) {
@@ -101,12 +98,12 @@ app.put('/obras/:id', verificarToken, async (req, res) => {
     }
 });
 
-// Rota para excluir uma obra
+// Rota de exclusão de uma obra
 app.delete('/obras/:id', verificarToken, async (req, res) => {
     try {
-        const obraDeletada = await Obra.findByIdAndDelete(req.params.id);
+        const obraDeletada = await Obra.findOneAndDelete({ _id: req.params.id, usuarioId: req.user.id });
         if (!obraDeletada) {
-            return res.status(404).send({ error: 'Obra não encontrada' });
+            return res.status(404).send({ error: 'Obra não encontrada ou sem permissão.' });
         }
         res.status(200).send({ message: 'Obra deletada com sucesso!' });
     } catch (error) {
@@ -114,45 +111,44 @@ app.delete('/obras/:id', verificarToken, async (req, res) => {
     }
 });
 
-
-// Rota de registro de usuário com validação
+// Rota de registro de usuário com validação e tratamento aprimorado
 app.post('/register', async (req, res) => {
     try {
         const { nome, email, senha } = req.body;
         if (!nome || !email || !senha) {
             return res.status(400).send({ error: 'Todos os campos são obrigatórios!' });
         }
+        
         const usuarioExistente = await User.findOne({ email: email.trim() });
         if (usuarioExistente) {
             return res.status(400).send({ error: 'E-mail já cadastrado!' });
         }
+
         const salt = await bcrypt.genSalt(10);
         const senhaCriptografada = await bcrypt.hash(senha.trim(), salt);
         const novoUsuario = new User({ nome, email: email.trim(), senha: senhaCriptografada });
         await novoUsuario.save();
         res.status(201).send({ message: 'Usuário registrado com sucesso!' });
     } catch (error) {
-        res.status(400).send({ error: 'Erro ao registrar usuário', detalhes: error.message });
+        res.status(500).send({ error: 'Erro ao registrar usuário.', detalhes: error.message });
     }
 });
 
-// Rota de login com validação
+// Rota de login com validação aprimorada
 app.post('/login', async (req, res) => {
     try {
         const { email, senha } = req.body;
         const usuario = await User.findOne({ email: email.trim() });
-        if (!usuario) {
-            return res.status(404).send({ error: 'Usuário não encontrado!' });
+        
+        // Melhorando a segurança com mensagem unificada
+        if (!usuario || !(await bcrypt.compare(senha.trim(), usuario.senha))) {
+            return res.status(401).send({ error: 'Credenciais inválidas.' });
         }
-        const senhaCorreta = await bcrypt.compare(senha.trim(), usuario.senha);
 
-        if (!senhaCorreta) {
-            return res.status(401).send({ error: 'Senha incorreta!' });
-        }
         const token = jwt.sign({ id: usuario._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.status(200).send({ token });
     } catch (error) {
-        res.status(500).send({ error: 'Erro ao fazer login', detalhes: error.message });
+        res.status(500).send({ error: 'Erro ao fazer login.', detalhes: error.message });
     }
 });
 

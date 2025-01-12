@@ -1,78 +1,116 @@
-# gestaodeobras
-Este projeto é uma aplicação web para gestão de obras voltada para pessoas físicas em processo de construção. A aplicação tem o objetivo de auxiliar no controle de tarefas, materiais, custos e progresso de uma obra de forma simples e eficiente.
-# Gestão de Obras
-Este repositório contém a aplicação backend para a gestão de obras, desenvolvida utilizando Node.js, Express, MongoDB, JWT para autenticação e bcrypt para criptografia de senhas.
+Obrafácil
+Obrafácil é uma aplicação web desenvolvida para auxiliar pessoas físicas no gerenciamento de obras e reformas. A plataforma oferece ferramentas para controle de tarefas, materiais, custos e progresso das obras de forma simples e eficiente.
+
+Funcionalidades
+Registro de Usuários: Permite o cadastro de novos usuários com autenticação segura.
+Login: Autenticação de usuários com geração de token JWT para acesso seguro.
+Gestão de Obras:
+Criação de Obras: Adicione novas obras com detalhes como nome, descrição, data de início e orçamento total.
+Listagem de Obras: Visualize todas as obras cadastradas associadas ao usuário logado.
+Atualização de Obras: Edite informações das obras existentes.
+Exclusão de Obras: Remova obras que não são mais necessárias.
+Proteção de Rotas: Acesso às funcionalidades principais apenas para usuários autenticados.
+Tecnologias Utilizadas
+Backend:
+Node.js
+Express
+MongoDB
+JWT para autenticação
+Bcrypt para criptografia de senhas
+Frontend:
+React.js
+Axios para requisições HTTP
+Bootstrap para estilização
+Testes:
+Jest
+Supertest
+Estrutura do Projeto
+O projeto está organizado da seguinte forma:
 
 
 gestaodeobra/
 ├── backend/
-│   ├── index.js
-│   ├── models/
-│   │   ├── Obra.js
-│   │   └── User.js
-│   ├── tests/
-│   │   └── auth.test.js
-│   └── package.json
+│   ├── models/               # Modelos de dados (Mongoose)
+│   ├── node_modules/         # Dependências do backend
+│   ├── tests/                # Testes automatizados (Jest e Supertest)
+│   ├── .env                  # Configurações de variáveis de ambiente
+│   ├── index.js              # Arquivo principal do servidor Express
+│   ├── jest.config.js        # Configurações do Jest
+│   ├── package-lock.json     # Lock de dependências do backend
+│   └── package.json          # Configurações e dependências do backend
+│
 ├── frontend/
-│   ├── public/
-│   ├── src/
-│   └── package.json
-└── database/
-    ├── scripts/
-    └── migrations/
+│   ├── node_modules/         # Dependências do frontend
+│   ├── public/               # Arquivos públicos (index.html, favicon, etc.)
+│   ├── src/                  # Código-fonte React
+│   ├── .gitignore            # Ignorar arquivos desnecessários no git
+│   ├── package-lock.json     # Lock de dependências do frontend
+│   ├── package.json          # Configurações e dependências do frontend
+│   └── README.md             # Instruções para o frontend
+│
+├── docker-compose.yml        # Arquivo para subir serviços com Docker
+├── LICENSE                   # Licença do projeto
+├── .gitignore                # Ignorar arquivos no repositório
+└── README.md                 # Instruções gerais do projeto
 
-Funcionalidades do Backend
-Registro de usuários
-Login com geração de token JWT
-CRUD de obras (criação, listagem, atualização e exclusão)
-Proteção de rotas com autenticação JWT
-Configuração e Execução
+
 Pré-requisitos
-Node.js e npm instalados
-MongoDB Atlas ou MongoDB local configurado
-Configuração
+Node.js e npm instalados.
+MongoDB Atlas ou instância local do MongoDB configurada.
+Configuração e Execução
 Clone o repositório:
-bash
-Copiar código
-git clone https://github.com/seuusuario/gestaodeobra.git
+
+
+git clone https://github.com/seuusuario/obrafacil.git
+Backend:
+
 Navegue até a pasta do backend:
-bash
-Copiar código
-cd gestaodeobra/backend
+
+
+cd obrafacil/backend
 Instale as dependências:
-bash
-Copiar código
+
+
 npm install
 Crie um arquivo .env com as seguintes variáveis:
+
 env
-Copiar código
 MONGO_URI=sua-conexao-com-mongodb
 JWT_SECRET=sua-chave-secreta
 PORT=3000
-Execução
-Para iniciar o servidor:
+Inicie o servidor:
 
-bash
-Copiar código
+
+npm start
+Frontend:
+
+Navegue até a pasta do frontend:
+
+
+cd ../frontend
+Instale as dependências:
+
+
+Copir código
+npm install
+Inicie o aplicativo:
+
+
 npm start
 Testes
-Para rodar os testes automatizados:
+Para rodar os testes automatizados no backend:
 
-bash
-Copiar código
+
+cd backend
 npm test
 Endpoints da API
-Autenticação
-POST /register - Registrar um novo usuário
-POST /login - Realizar login
-Obras
-POST /obras - Criar uma nova obra (autenticado)
-GET /obras - Listar todas as obras (autenticado)
-PUT /obras/:id - Atualizar uma obra existente (autenticado)
-DELETE /obras/:id - Excluir uma obra existente (autenticado)
-Tecnologias Utilizadas
-Backend: Node.js, Express
-Banco de Dados: MongoDB
-Autenticação: JWT
-Criptografia: bcrypt
-Testes: Jest, Supertest
+Autenticação:
+POST /register - Registrar um novo usuário.
+POST /login - Realizar login.
+Obras:
+POST /obras - Criar uma nova obra (requer autenticação).
+GET /obras - Listar todas as obras do usuário autenticado.
+PUT /obras/:id - Atualizar uma obra existente (requer autenticação).
+DELETE /obras/:id - Excluir uma obra existente (requer autenticação).
+Licença
+Este projeto está licenciado sob a Licença Apache 2.0. Consulte o arquivo LICENSE para obter mais informações.
