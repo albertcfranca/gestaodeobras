@@ -1,116 +1,181 @@
-Obrafácil
-Obrafácil é uma aplicação web desenvolvida para auxiliar pessoas físicas no gerenciamento de obras e reformas. A plataforma oferece ferramentas para controle de tarefas, materiais, custos e progresso das obras de forma simples e eficiente.
 
-Funcionalidades
-Registro de Usuários: Permite o cadastro de novos usuários com autenticação segura.
-Login: Autenticação de usuários com geração de token JWT para acesso seguro.
-Gestão de Obras:
-Criação de Obras: Adicione novas obras com detalhes como nome, descrição, data de início e orçamento total.
-Listagem de Obras: Visualize todas as obras cadastradas associadas ao usuário logado.
-Atualização de Obras: Edite informações das obras existentes.
-Exclusão de Obras: Remova obras que não são mais necessárias.
-Proteção de Rotas: Acesso às funcionalidades principais apenas para usuários autenticados.
-Tecnologias Utilizadas
-Backend:
-Node.js
-Express
-MongoDB
-JWT para autenticação
-Bcrypt para criptografia de senhas
-Frontend:
-React.js
-Axios para requisições HTTP
-Bootstrap para estilização
-Testes:
-Jest
-Supertest
-Estrutura do Projeto
-O projeto está organizado da seguinte forma:
+# Gestão de Obras
 
+**Obrafacil** é uma aplicação web full stack para gestão de obras e reformas, focada em pessoas físicas que desejam controlar suas obras de forma simples e eficiente. A aplicação permite o gerenciamento de tarefas, custos, progresso da obra e controle de acesso através de autenticação segura.
 
-gestaodeobra/
+## Funcionalidades
+- ✅ **Cadastro e Login de Usuários com Autenticação JWT**
+- ✅ **CRUD de Obras (Criar, Ler, Atualizar e Deletar)**
+- ✅ **Proteção de Rotas com Autenticação JWT**
+- ✅ **Validação de Formulários com Joi**
+- ✅ **Criptografia de Senhas usando Bcrypt**
+- ✅ **Testes Automatizados com Jest e Supertest**
+- ✅ **Arquitetura Full Stack Separando Frontend e Backend**
+- ✅ **Conexão com MongoDB Atlas**
+
+---
+
+## 📦 Estrutura do Projeto
+
+```plaintext
+gestaodeobras/
 ├── backend/
-│   ├── models/               # Modelos de dados (Mongoose)
-│   ├── node_modules/         # Dependências do backend
-│   ├── tests/                # Testes automatizados (Jest e Supertest)
-│   ├── .env                  # Configurações de variáveis de ambiente
-│   ├── index.js              # Arquivo principal do servidor Express
-│   ├── jest.config.js        # Configurações do Jest
-│   ├── package-lock.json     # Lock de dependências do backend
-│   └── package.json          # Configurações e dependências do backend
+│   ├── index.js
+│   ├── models/
+│   │   ├── Obra.js
+│   │   └── User.js
+│   ├── tests/
+│   │   └── auth.test.js
+│   ├── .env
+│   └── package.json
 │
 ├── frontend/
-│   ├── node_modules/         # Dependências do frontend
-│   ├── public/               # Arquivos públicos (index.html, favicon, etc.)
-│   ├── src/                  # Código-fonte React
-│   ├── .gitignore            # Ignorar arquivos desnecessários no git
-│   ├── package-lock.json     # Lock de dependências do frontend
-│   ├── package.json          # Configurações e dependências do frontend
-│   └── README.md             # Instruções para o frontend
+│   ├── public/
+│   ├── src/
+│   │   └── components/
+│   │       ├── Login.js
+│   │       ├── CadastroObra.js
+│   │       └── EditObra.js
+│   └── package.json
 │
-├── docker-compose.yml        # Arquivo para subir serviços com Docker
-├── LICENSE                   # Licença do projeto
-├── .gitignore                # Ignorar arquivos no repositório
-└── README.md                 # Instruções gerais do projeto
+├── database/
+│   └── scripts/
+│
+├── docker-compose.yml
+├── .gitignore
+├── README.md
+├── LICENSE
+└── package-lock.json
 
+📡 Configuração e Execução
+📋 Pré-requisitos
+Node.js e npm/yarn instalados
+MongoDB Atlas ou MongoDB Local
 
-Pré-requisitos
-Node.js e npm instalados.
-MongoDB Atlas ou instância local do MongoDB configurada.
-Configuração e Execução
-Clone o repositório:
-
-
-git clone https://github.com/seuusuario/obrafacil.git
-Backend:
-
-Navegue até a pasta do backend:
-
-
-cd obrafacil/backend
-Instale as dependências:
-
-
-npm install
-Crie um arquivo .env com as seguintes variáveis:
-
-env
-MONGO_URI=sua-conexao-com-mongodb
+🛠️ Configuração
+Clone o repositório: git clone https://github.com/seuusuario/gestaodeobra.git
+Navegue até o diretório do backend: cd gestaodeobra/backend
+Instale as dependências: npm install
+Crie um arquivo .env com as seguintes variáveis: MONGO_URI=sua-conexao-com-mongodb
 JWT_SECRET=sua-chave-secreta
 PORT=3000
-Inicie o servidor:
 
-
+▶️ Executar o Backend
 npm start
-Frontend:
 
-Navegue até a pasta do frontend:
-
-
+▶️ Executar o Frontend
 cd ../frontend
-Instale as dependências:
-
-
-Copir código
 npm install
-Inicie o aplicativo:
-
-
 npm start
-Testes
-Para rodar os testes automatizados no backend:
 
+📡 Documentação da API - Backend
+Autenticação
+Registrar Usuário
+POST /register
 
-cd backend
+Body JSON:
+{
+  "nome": "João Silva",
+  "email": "joao@email.com",
+  "senha": "123456"
+}
+
+Parâmetro	Tipo	Obrigatório	Descrição
+nome	string	Sim	Nome do usuário
+email	string	Sim	Email do usuário
+senha	string	Sim	Senha para autenticação
+
+Resposta de Sucesso (201 Created):
+{
+  "message": "Usuário registrado com sucesso!"
+}
+
+Login de Usuário
+POST /login
+
+Body JSON:
+{
+  "email": "joao@email.com",
+  "senha": "123456"
+}
+
+Parâmetro	Tipo	Obrigatório	Descrição
+email	string	Sim	Email do usuário
+senha	string	Sim	Senha de acesso
+
+Resposta de Sucesso (200 OK):
+
+{
+  "token": "jwt_token_gerado"
+}
+
+Obras
+Criar Obra (Requer Autenticação)
+POST /obras
+
+Body JSON:
+{
+  "nome": "Reforma Cozinha",
+  "descricao": "Reforma completa da cozinha.",
+  "dataInicio": "2024-01-01",
+  "orcamentoTotal": 10000
+}
+
+Parâmetro	Tipo	Obrigatório	Descrição
+nome	string	Sim	Nome da obra
+descricao	string	Sim	Descrição detalhada da obra
+dataInicio	date	Sim	Data de início da obra
+orcamentoTotal	number	Sim	Orçamento total da obra (R$)
+
+Resposta de Sucesso (201 Created):
+{
+  "message": "Obra criada com sucesso!"
+}
+
+Listar Todas as Obras do Usuário
+GET /obras
+
+Cabeçalho Requerido:
+Authorization: Bearer <token>
+
+Resposta de Sucesso (200 OK):
+[
+  {
+    "_id": "65d1234abcde5678",
+    "nome": "Reforma Cozinha",
+    "descricao": "Reforma completa da cozinha.",
+    "dataInicio": "2024-01-01",
+    "orcamentoTotal": 10000
+  }
+]
+
+🧪 Testes Automatizados
+Para rodar os testes automatizados, utilize o comando:
 npm test
-Endpoints da API
-Autenticação:
-POST /register - Registrar um novo usuário.
-POST /login - Realizar login.
-Obras:
-POST /obras - Criar uma nova obra (requer autenticação).
-GET /obras - Listar todas as obras do usuário autenticado.
-PUT /obras/:id - Atualizar uma obra existente (requer autenticação).
-DELETE /obras/:id - Excluir uma obra existente (requer autenticação).
-Licença
-Este projeto está licenciado sob a Licença Apache 2.0. Consulte o arquivo LICENSE para obter mais informações.
+
+📦 Tecnologias Utilizadas
+Frontend: React.js, Material UI
+Backend: Node.js, Express.js
+Banco de Dados: MongoDB (Atlas e Local)
+Autenticação: JWT (JSON Web Token)
+Criptografia: Bcrypt.js
+Validação: Joi
+Testes: Jest, Supertest
+Gerenciamento de Pacotes: npm
+Controle de Versão: Git e GitHub
+
+📜 Licença
+Este projeto está licenciado sob a licença MIT. Consulte o arquivo LICENSE para mais informações.
+
+✨ Contribuições
+Contribuições são bem-vindas! Para contribuir:
+
+1 Fork o projeto.
+2 Crie uma nova branch: git checkout -b feature/nova-feature.
+3 Commit suas mudanças: git commit -m 'Adiciona nova feature'.
+4 Envie para o repositório remoto: git push origin feature/nova-feature.
+5 Abra um Pull Request.
+
+📧 Contato
+Autor: Albert christian frança
+E-mail: albertcfranca@gmail.com
